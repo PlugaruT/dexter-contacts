@@ -1,0 +1,2 @@
+install (FILES dexter-contacts.desktop DESTINATION ${CMAKE_INSTALL_FULL_DATAROOTDIR}/applications)
+install (FILES LocationMarker.svg DESTINATION ${CMAKE_INSTALL_FULL_DATAROOTDIR}/${CMAKE_PROJECT_NAME})
