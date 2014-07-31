@@ -55,8 +55,8 @@ public class Dexter.Window : Gtk.Window {
 
         var thinpaned = new Granite.Widgets.ThinPaned (Gtk.Orientation.HORIZONTAL);
         thinpaned.set_position (150);
-        thinpaned.add1 (contacts_list);
-        thinpaned.add2 (contact_view);
+        thinpaned.pack1 (contacts_list, false, false);
+        thinpaned.pack2 (contact_view, true, false);
         add (thinpaned);
         show_all ();
     }

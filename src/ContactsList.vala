@@ -23,39 +23,17 @@
 public class Dexter.ContactsList : Gtk.Grid {
     public signal void contact_selected (Folks.Individual individual);
 
-    private enum ListColumn {
-        ICON = 0,
-        NAME,
-        CONTACT,
-        N_COLUMNS
-    }
-
-    private Gtk.ListStore list_store;
-    private Gtk.TreeView view;
-    private Folks.AvatarCache avatar_cache;
+    private Gtk.ListBox list_box;
     public ContactsList () {
-        list_store = new Gtk.ListStore (ListColumn.N_COLUMNS, typeof (GLib.Icon), typeof (string), typeof (Folks.Individual));
-        avatar_cache = Folks.AvatarCache.dup ();
-
-        var cellpixbuf = new Gtk.CellRendererPixbuf ();
-        cellpixbuf.stock_size = Gtk.IconSize.DIALOG;
-        var icon_column = new Gtk.TreeViewColumn.with_attributes ("Icon", cellpixbuf, "gicon", ListColumn.ICON);
-        var name_column = new Gtk.TreeViewColumn.with_attributes ("Name", new Gtk.CellRendererText (), "markup", ListColumn.NAME);
-
-        view = new Gtk.TreeView.with_model (list_store);
-        view.expand = true;
-        view.append_column (icon_column);
-        view.append_column (name_column);
-        view.activate_on_single_click = true;
-        view.headers_visible = false;
-        view.row_activated.connect ((path, column) => {
-            Gtk.TreeIter iter;
-            list_store.get_iter (out iter, path);
-            GLib.Value val;
-            list_store.get_value (iter, ListColumn.CONTACT, out val);
-            contact_selected ((Folks.Individual)val.get_object ());
+        list_box = new Gtk.ListBox ();
+        var scrolled = new Gtk.ScrolledWindow (null, null);
+        scrolled.vexpand = true;
+        scrolled.add (list_box);
+        list_box.row_activated.connect ((child) => {
+            contact_selected (((ContactItem)child).individual);
         });
-        this.add (view);
+
+        this.add (scrolled);
         show_all ();
         ContactsManager.get_default ().individual_added.connect ((individual) => {add_individual.begin (individual);});
     }
@@ -64,25 +42,62 @@ public class Dexter.ContactsList : Gtk.Grid {
         if (individual.is_user == true)
             return;
 
-        bool first = false;
-        Gtk.TreeIter iter;
-        if (list_store.get_iter_first (out iter) == false)
-            first = true;
-        list_store.append (out iter);
-        Icon avatar = individual.avatar;
-        if (avatar == null)
-            try {
-            avatar = yield avatar_cache.load_avatar (individual.id);
-            } catch (Error e) {
-                critical (e.message);
-            }
-        if (avatar == null)
-            avatar = new ThemedIcon ("avatar-default");
-        list_store.set (iter, ListColumn.ICON, avatar, ListColumn.NAME, individual.full_name, ListColumn.CONTACT, individual);
-        if (first == true) {
-            var selection = view.get_selection ();
-            selection.select_iter (iter);
+        var contact_item = new ContactItem (individual);
+        list_box.add (contact_item);
+        contact_item.show_all ();
+        if (list_box.get_children ().length () <= 1) {
+            list_box.select_row (contact_item);
             contact_selected (individual);
+        }
+    }
+}
+
+
+public class Dexter.ContactItem : Gtk.ListBoxRow {
+    public Folks.Individual individual;
+    private Gtk.Image avatar_image;
+    private Gtk.Label name_label;
+    public ContactItem (Folks.Individual individual) {
+        this.individual = individual;
+        var main_grid = new Gtk.Grid ();
+        main_grid.orientation = Gtk.Orientation.HORIZONTAL;
+        main_grid.margin = 6;
+        main_grid.row_spacing = 6;
+        main_grid.column_spacing = 12;
+        main_grid.expand = true;
+        Icon avatar = individual.avatar;
+        if (avatar == null) {
+            avatar = new ThemedIcon ("avatar-default");
+        }
+
+        avatar_image = new Gtk.Image.from_gicon (avatar, Gtk.IconSize.DIALOG);
+        if (avatar == null) {
+            load_avatar_from_cache.begin ();
+        }
+
+        string name = null;
+        var structured_name = individual.structured_name;
+        if (structured_name != null) {
+            
+        }
+
+        if (individual.full_name != null) {
+            name = individual.full_name;
+        } else {
+            name = individual.nickname;
+        }
+
+        name_label = new Gtk.Label (name);
+        main_grid.add (avatar_image);
+        main_grid.add (name_label);
+        add (main_grid);
+    }
+
+    private async void load_avatar_from_cache () {
+        try {
+            avatar_image.gicon = yield Folks.AvatarCache.dup ().load_avatar (individual.id);
+        } catch (Error e) {
+            critical (e.message);
         }
     }
 }
