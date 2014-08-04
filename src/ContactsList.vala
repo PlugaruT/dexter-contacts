@@ -55,7 +55,7 @@ public class Dexter.ContactsList : Gtk.Grid {
 
 public class Dexter.ContactItem : Gtk.ListBoxRow {
     public Folks.Individual individual;
-    private Gtk.Image avatar_image;
+    private Widgets.ContactImage avatar_image;
     private Gtk.Label name_label;
     public ContactItem (Folks.Individual individual) {
         this.individual = individual;
@@ -65,15 +65,8 @@ public class Dexter.ContactItem : Gtk.ListBoxRow {
         main_grid.row_spacing = 6;
         main_grid.column_spacing = 12;
         main_grid.expand = true;
-        Icon avatar = individual.avatar;
-        if (avatar == null) {
-            avatar = new ThemedIcon ("avatar-default");
-        }
-
-        avatar_image = new Gtk.Image.from_gicon (avatar, Gtk.IconSize.DIALOG);
-        if (avatar == null) {
-            load_avatar_from_cache.begin ();
-        }
+        
+        avatar_image = new Widgets.ContactImage (Gtk.IconSize.DIALOG, individual);
 
         string name = null;
         var structured_name = individual.structured_name;
@@ -91,13 +84,5 @@ public class Dexter.ContactItem : Gtk.ListBoxRow {
         main_grid.add (avatar_image);
         main_grid.add (name_label);
         add (main_grid);
-    }
-
-    private async void load_avatar_from_cache () {
-        try {
-            avatar_image.gicon = yield Folks.AvatarCache.dup ().load_avatar (individual.id);
-        } catch (Error e) {
-            critical (e.message);
-        }
     }
 }
