@@ -47,6 +47,8 @@ public class Dexter.Widgets.ContactImage : Gtk.Stack {
     public void add_contact (Folks.Individual individual) {
         if (individual.avatar != null && default_avatar == true) {
             show_avatar_from_loadable_icon (individual.avatar);
+        } else {
+            show_default_avatar ();
         }
 
         individual.notify["avatar"].connect (() => {
