@@ -25,6 +25,7 @@ public class Dexter.ContactView : Gtk.Grid {
     private Body address_grid;
     private Body phone_grid;
     private Body email_grid;
+    private PersonEntry person_box;
     private Gtk.Label name_label;
     private Gtk.Label role_label;
 
@@ -53,7 +54,8 @@ public class Dexter.ContactView : Gtk.Grid {
         var centered_name_box = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 0);
         centered_name_box.hexpand = true;
         centered_name_box.pack_start (name_grid, true, true, 6);
-
+        
+        person_box = new PersonEntry ();
         address_grid = new Body (_("Address:"));
         phone_grid = new Body (_("Phone:"));
         email_grid = new Body (_("Email:"));
@@ -65,16 +67,18 @@ public class Dexter.ContactView : Gtk.Grid {
         sub_grid.orientation = Gtk.Orientation.VERTICAL;
         sub_grid.margin = 18;
         sub_grid.row_spacing = 12;
+        sub_grid.set_column_homogeneous (true);
 
 	    var left_grid = new Gtk.Grid ();
 	    var right_grid = new Gtk.Grid ();
 
-	    left_grid.add (address_grid);
+        left_grid.attach (person_box, 0, 0, 3, 3);
+	    left_grid.attach (address_grid, 0, 3, 3, 3);
 	    right_grid.attach (phone_grid, 0, 0, 3, 3);
-	    right_grid.attach (email_grid, 0, 3, 6, 6);
+	    right_grid.attach (email_grid, 0, 3, 6, 3);
 
         sub_grid.attach (left_grid, 0, 0, 5, 5);
-        sub_grid.attach (right_grid, 5, 0, 5, 10);
+        sub_grid.attach (right_grid, 5, 0, 5, 5);
 
         container.add (sub_grid);
 
@@ -98,6 +102,8 @@ public class Dexter.ContactView : Gtk.Grid {
                 role_string += "\n" + format_role ((Folks.Role)role.value);
             }
         }
+        
+        person_box.set_contact (individual);        
 
         avatar.add_contact (individual);
         role_label.label = role_string;
@@ -254,16 +260,52 @@ public class Dexter.Body : Gtk.Grid {
     }
 }
 
-public class PersonEntry : Gtk.ListBoxRow {
+public class PersonEntry : Gtk.ListBox {
 
-    public PersonEntry (Folks.Individual individual) {
+    public PersonEntry () {    
+           
+    }
+    
+    public void set_contact (Folks.Individual individual) {
+        clear ();
+        
+        var name = individual.structured_name;
+           
+        if (name != null) {
+            if(name.given_name != null)
+                add (make_entry (_("Given name"), name.given_name));
+                  
+            if (name.family_name != null)
+                add (make_entry (_("Family name"), name.family_name));
+        }
+           
+        if (individual.birthday != null)
+            add (make_entry (_("Birthday"), individual.birthday.format ("%d.%m.%Y")));   
+    }
+    
+    private Gtk.ListBoxRow make_entry (string tag, string entry) {
         var container = new Gtk.Grid ();
-        container.vexpand = true;
-        container.hexpand = true;
         container.row_spacing = 12;
         container.column_spacing = 6;
         
+        var tag_label = new Gtk.Label ("<b>%s</b>".printf (tag));
+        tag_label.use_markup = true;
         
+        var entry_label = new Gtk.Label (entry);
+        
+        container.attach (tag_label, 0, 0, 1, 1);
+        container.attach (entry_label, 1, 0, 1, 1);
+        
+        var box = new Gtk.ListBoxRow ();
+        box.add (container);
+        
+        return box;
+    }
+    
+    private void clear () {
+        forall ((widget) => {
+            widget.destroy ();
+        });
     }
 }
 
@@ -313,7 +355,7 @@ public class AddressEntry : Gtk.ListBoxRow {
             container.attach (region_label, 3, current_line++, 4, 1);
         }
         
-        container.attach (champlain_embed, 0, current_line, 8, 6);
+        container.attach (champlain_embed, 0, current_line, 7, 6);
 
         add (container);
     }
