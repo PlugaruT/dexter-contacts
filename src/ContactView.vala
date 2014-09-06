@@ -39,6 +39,7 @@ public class Dexter.ContactView : Gtk.Grid {
 
         name_label = new Gtk.Label ("");
         name_label.use_markup = true;
+        name_label.margin_left = 12;
 
         role_label = new Gtk.Label ("");
         role_label.use_markup = true;
@@ -48,8 +49,6 @@ public class Dexter.ContactView : Gtk.Grid {
         name_grid.attach (avatar, 0, 0, 2, 2);
         name_grid.attach (name_label, 2, 0, 1, 3);
         name_grid.attach (role_label, 2, 1, 1, 3);
-        name_grid.add (separator);
-
 
         var centered_name_box = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 0);
         centered_name_box.hexpand = true;
@@ -67,8 +66,8 @@ public class Dexter.ContactView : Gtk.Grid {
         sub_grid.margin = 18;
         sub_grid.row_spacing = 12;
 
-	var left_grid = new Gtk.Grid ();
-	var right_grid = new Gtk.Grid ();
+	    var left_grid = new Gtk.Grid ();
+	    var right_grid = new Gtk.Grid ();
 
 	    left_grid.add (address_grid);
 	    right_grid.attach (phone_grid, 0, 0, 3, 3);
@@ -296,51 +295,45 @@ public class AddressEntry : Gtk.ListBoxRow {
         
         point = new Dexter.Marker ();
         
-     //   compute_location.begin (address.street);
+        compute_location.begin (address.to_string ());
+
+        view.zoom_level = 14;
+        view.center_on (point.latitude, point.longitude);
+        marker_layer.add_marker (point);
+
+        int current_line = 0;
         
         if (address.street != null && address.street != "") {
             var street_label = new Gtk.Label (address.street);
-            container.attach (street_label, 3, 0, 4, 1);
+            container.attach (street_label, 3, current_line++, 4, 1);
         }
         
         if (address.region != null && address.region != "") {
             var region_label = new Gtk.Label (address.region);
-            container.attach (region_label, 3, 1, 4, 2);
+            container.attach (region_label, 3, current_line++, 4, 1);
         }
         
-        if (address.locality != null && address.locality != "") {
-            container.attach (kind_label, 0, 0, 2, 1);
-            container.attach (locality_label, 3, 2, 4, 3);
-        }
-        
-        container.attach (champlain_embed, 1, 4, 4, 8);
+        container.attach (champlain_embed, 0, current_line, 8, 6);
 
         add (container);
     }
     
     private async void compute_location (string loc) {
-        SourceFunc callback = compute_location.callback;
-        
+        SourceFunc callback = compute_location.callback;    
    
-            var forward = new Geocode.Forward.for_string (loc);
+        var forward = new Geocode.Forward.for_string (loc);
             
-            try {
-                forward.set_answer_count (1);
-                var places = forward.search ();
-                foreach (var place in places) {
-                    point.latitude = place.location.latitude;
-                    point.longitude = place.location.longitude;
-                    champlain_embed.champlain_view.go_to (point.latitude, point.longitude);
-                    warning ("set");
-                }
-            } catch (Error error) {
-                debug (error.message);
+        try {
+            forward.set_answer_count (1);
+            var places = forward.search ();
+            foreach (var place in places) {
+                point.latitude = place.location.latitude;
+                point.longitude = place.location.longitude;
+                champlain_embed.champlain_view.go_to (point.latitude, point.longitude);
             }
-            
-            Idle.add ((owned) callback);
- 
-        
-        yield;
+        } catch (Error error) {
+            debug (error.message);
+        }
     }
 }
 
@@ -389,37 +382,5 @@ public class MailAddressEntry : Gtk.ListBoxRow {
         //TODO Set Mailaction
 
         add (container);
-    }
-}
-
-public class Dexter.FieldBody : Gtk.Grid {
-    private Gtk.Label header_label;
-    int row = 1;
-    public FieldBody (string header) {
-        hexpand = true;
-        vexpand = true;
-        row_spacing = 12;
-        column_spacing = 6;
-        header_label = new Gtk.Label ("<b>%s</b>".printf (header));
-        header_label.use_markup = true;
-        header_label.xalign = 0;
-        attach (header_label, 0, 0, 3, 1);
-    }
-
-    public void add_parameter (string left_string, string right_string) {
-        var left_label = new Gtk.Label (left_string);
-        left_label.xalign = 1;
-        var right_label = new Gtk.Label (right_string);
-        right_label.xalign = 0;
-        attach (left_label, 1, row, 1, 1);
-        attach (right_label, 2, row, 1, 1);
-        row++;
-    }
-
-    public void clear () {
-        forall ((widget) => {
-            if (widget != header_label)
-                widget.destroy ();
-        });
     }
 }
