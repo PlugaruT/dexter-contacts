@@ -47,14 +47,14 @@ public class Dexter.ContactView : Gtk.Grid {
 
         var separator = new Gtk.Separator (Gtk.Orientation.HORIZONTAL);
 
-        name_grid.attach (avatar, 0, 0, 2, 2);
-        name_grid.attach (name_label, 2, 0, 1, 3);
-        name_grid.attach (role_label, 2, 1, 1, 3);
+        name_grid.attach (avatar, 0, 0, 1, 2);
+        name_grid.attach (name_label, 1, 0, 1, 1);
+        name_grid.attach (role_label, 1, 1, 1, 1);
 
         var centered_name_box = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 0);
         centered_name_box.hexpand = true;
         centered_name_box.pack_start (name_grid, true, true, 6);
-        
+
         person_box = new PersonEntry ();
         address_grid = new Body (_("Address:"));
         phone_grid = new Body (_("Phone:"));
@@ -69,13 +69,13 @@ public class Dexter.ContactView : Gtk.Grid {
         sub_grid.row_spacing = 12;
         sub_grid.set_column_homogeneous (true);
 
-	    var left_grid = new Gtk.Grid ();
-	    var right_grid = new Gtk.Grid ();
+        var left_grid = new Gtk.Grid ();
+        var right_grid = new Gtk.Grid ();
 
         left_grid.attach (person_box, 0, 0, 3, 3);
-	    left_grid.attach (address_grid, 0, 3, 3, 3);
-	    right_grid.attach (phone_grid, 0, 0, 3, 3);
-	    right_grid.attach (email_grid, 0, 3, 6, 3);
+        left_grid.attach (address_grid, 0, 3, 3, 3);
+        right_grid.attach (phone_grid, 0, 0, 3, 3);
+        right_grid.attach (email_grid, 0, 3, 6, 3);
 
         sub_grid.attach (left_grid, 0, 0, 5, 5);
         sub_grid.attach (right_grid, 5, 0, 5, 5);
@@ -221,7 +221,7 @@ public class Dexter.ContactView : Gtk.Grid {
     }
 
     private void set_name_label_text (string name) {
-        name_label.set_markup ("<big>%s</big>".printf (Markup.escape_text (name)));
+        name_label.set_markup ("<span size=\"x-large\"><b>%s</b></span>".printf (Markup.escape_text (name)));
     }
 
     private string format_role (Folks.Role role) {

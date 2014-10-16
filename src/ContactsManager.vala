@@ -31,13 +31,12 @@ public class Dexter.ContactsManager : GLib.Object {
     public signal void individual_added (Folks.Individual individual);
     public signal void individual_removed (Folks.Individual individual);
 
-    private Gee.TreeMap<string, Folks.Individual> individuals;
+    public HashTable<string, Folks.Individual> individuals { private set; public get; }
     private ContactsManager () {
-        individuals = new Gee.TreeMap<string, Folks.Individual> (null, null);
-        load_contacts.begin ();
+        individuals = new HashTable<string, Folks.Individual> (str_hash, str_equal);
     }
 
-    private async void load_contacts () {
+    public async void load_contacts () {
         var individual_aggregator = Folks.IndividualAggregator.dup ();
         try {
             yield individual_aggregator.prepare ();
@@ -49,7 +48,9 @@ public class Dexter.ContactsManager : GLib.Object {
 
     private void individuals_changed (Gee.MultiMap<Folks.Individual?, Folks.Individual?> changes) {
         for (var iterator = changes.map_iterator (); iterator.next(); iterator.has_next ()) {
-            individual_added (iterator.get_value ());
+            var individual = iterator.get_value ();
+            individual_added (individual);
+            individuals.set (individual.id, individual);
         }
     }
 }
