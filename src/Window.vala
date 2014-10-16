@@ -1,28 +1,27 @@
 // -*- Mode: vala; indent-tabs-mode: nil; tab-width: 4 -*-
 /*-
- * Copyright (c) 2014 Pantheon Developers (http://launchpad.net/online-accounts-plug)
+ * Copyright (c) 2014 Dexter Contacts Developers (https://launchpad.net/dexter-contacts)
  *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Library General Public
- * License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * This library is distributed in the hope that it will be useful,
+ * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Library General Public License for more details.
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU Library General Public
- * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * Authored by: Corentin Noël <tintou@mailoo.org>
+ * Authored by: Corentin Noël <corentin@elementaryos.org>
  */
 
 public class Dexter.Window : Gtk.Window {
     private Gtk.Popover addressbook_popover;
     private Gtk.ToggleButton address_books_button;
+    private Granite.Widgets.Welcome welcome_view;
     public Window () {
         var headerbar = new Gtk.HeaderBar ();
         headerbar.show_close_button = true;
@@ -32,17 +31,17 @@ public class Dexter.Window : Gtk.Window {
         set_default_size (850, 550);
 
         address_books_button = new Gtk.ToggleButton ();
-        address_books_button.image = new Gtk.Image.from_icon_name ("office-address-book", Gtk.IconSize.LARGE_TOOLBAR);
+        address_books_button.image = new Gtk.Image.from_icon_name ("open-menu", Gtk.IconSize.LARGE_TOOLBAR);
         address_books_button.toggled.connect (() => {toggle_address_books_popover (address_books_button.active);});
 
         var add_contact_button = new Gtk.Button.from_icon_name ("contact-new", Gtk.IconSize.LARGE_TOOLBAR);
         add_contact_button.clicked.connect (() => {show_creation_dialog ();});
 
         var search_entry = new Gtk.SearchEntry ();
-        search_entry.placeholder_text = _("Search contact…");
+        search_entry.placeholder_text = _("Search contact");
 
-        headerbar.pack_start (address_books_button);
         headerbar.pack_start (add_contact_button);
+        headerbar.pack_end (address_books_button);
         headerbar.pack_end (search_entry);
 
         destroy.connect (() => {
@@ -57,7 +56,31 @@ public class Dexter.Window : Gtk.Window {
         thinpaned.set_position (150);
         thinpaned.pack1 (contacts_list, false, false);
         thinpaned.pack2 (contact_view, true, false);
-        add (thinpaned);
+
+        welcome_view = new Granite.Widgets.Welcome (_("No Contacts Found"), _("Try to add some"));
+        welcome_view.append ("contact-new", _("Create"), _("Create a new contact"));
+        welcome_view.append ("document-import", _("Import"), _("Add a vCard"));
+        welcome_view.show_all ();
+
+        var main_stack = new Gtk.Stack ();
+        main_stack.transition_type = Gtk.StackTransitionType.CROSSFADE;
+        main_stack.add_named (thinpaned, "main_view");
+        main_stack.add_named (welcome_view, "welcome_view");
+        main_stack.set_visible_child_name ("welcome_view");
+
+        var contact_manager = ContactsManager.get_default ();
+        contact_manager.loaded.connect (() => {
+            if (contact_manager.get_contacts ().length () > 0) {
+                main_stack.set_visible_child_name ("main_view");
+            } else {
+                contact_manager.individual_added.connect (() => {
+                    if (contact_manager.get_contacts ().length () > 0)
+                        main_stack.set_visible_child_name ("main_view");
+                });
+            }
+        });
+
+        add (main_stack);
         show_all ();
     }
 
@@ -115,10 +138,16 @@ public class Dexter.App : Granite.Application {
         about_artists = {null};
     }
 
+    public Window window;
     protected override void activate () {
-        // Create the window of this application and show it
-        var window = new Window ();
+        if (get_windows () != null) {
+            get_windows ().data.present (); // present window if app is already running
+            return;
+        }
+
+        window = new Window ();
         window.show_all ();
+
         Gtk.main ();
     }
 
