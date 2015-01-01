@@ -43,7 +43,16 @@ public class Dexter.ContactsList : Gtk.Grid {
 
         this.add (scrolled);
         show_all ();
-        load_contacts.begin ();
+        var contact_manager = ContactsManager.get_default ();
+        contact_manager.individual_added.connect ((individual) => {add_individual (individual);});
+        contact_manager.prepared.connect (() => {
+            if (list_box.get_children ().length () == 0)
+                return;
+
+            var row = list_box.get_row_at_index (0);
+            list_box.select_row (row);
+            contact_selected (((ContactItem)row).individual);
+        });
     }
 
     private void header_update_func (Gtk.ListBoxRow row, Gtk.ListBoxRow? before) {
@@ -65,17 +74,6 @@ public class Dexter.ContactsList : Gtk.Grid {
         var header = new HeaderItem (head_string.up ());
         row.set_header (header);
         header.show_all ();
-    }
-
-    private async void load_contacts () {
-        var contact_manager = ContactsManager.get_default ();
-        yield contact_manager.load_contacts ();
-        contact_manager.loaded.connect (() => {
-            var row = list_box.get_row_at_index (0);
-            list_box.select_row (row);
-            contact_selected (((ContactItem)row).individual);
-        });
-        contact_manager.individual_added.connect ((individual) => {add_individual (individual);});
     }
 
     private void add_individual (Folks.Individual individual) {
@@ -128,25 +126,13 @@ public class Dexter.ContactsList : Gtk.Grid {
     }
 }
 
-public class Dexter.HeaderItem : Gtk.Grid {
-    public string character { private set; public get; }
-    private Gtk.Label character_label;
-    public HeaderItem (string character) {
-        orientation = Gtk.Orientation.VERTICAL;
-        row_spacing = 6;
-        margin_top = 6;
+public class Dexter.HeaderItem : Gtk.Label {
+    public HeaderItem (string label) {
+        this.label = label;
+        margin = 6;
         hexpand = true;
-        sensitive = false;
-        this.character = character;
-        character_label = new Gtk.Label ("<b>%s</b>".printf (character));
-        character_label.use_markup = true;
-        character_label.hexpand = true;
-        character_label.halign = Gtk.Align.START;
-        character_label.margin_start = 12;
-        var separator = new Gtk.Separator (Gtk.Orientation.HORIZONTAL);
-        separator.hexpand = true;
-        add (character_label);
-        add (separator);
+        halign = Gtk.Align.START;
+        get_style_context ().add_class ("category-label");
     }
 }
 
@@ -177,7 +163,7 @@ public class Dexter.ContactItem : Gtk.ListBoxRow {
         name_label.use_markup = true;
         name_label.ellipsize = Pango.EllipsizeMode.END;
         name_label.margin = 6;
-        name_label.margin_end = 0;
+        name_label.margin_start = 12;
         add (name_label);
     }
     

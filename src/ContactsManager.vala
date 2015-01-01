@@ -28,36 +28,39 @@ public class Dexter.ContactsManager : GLib.Object {
 
     public signal void individual_added (Folks.Individual individual);
     public signal void individual_removed (Folks.Individual individual);
-    public signal void loaded ();
+    public signal void individual_modified (Folks.Individual old_individual, Folks.Individual new_individual);
+    public signal void prepared ();
 
     private Folks.IndividualAggregator individual_aggregator;
 
     private ContactsManager () {
         individual_aggregator = Folks.IndividualAggregator.dup ();
+        individual_aggregator.individuals_changed_detailed.connect (individuals_has_changed);
+        individual_aggregator.prepare.begin ();
+        individual_aggregator.notify["is-quiescent"].connect (() => {prepared ();});
     }
 
-    public async void load_contacts () {
-        if (individual_aggregator.is_quiescent == false) {
-            try {
-                yield individual_aggregator.prepare ();
-            } catch (Error e) {
-                critical (e.message);
+    public void individuals_has_changed (Gee.MultiMap<Folks.Individual?,Folks.Individual?> changes) {
+        changes.map_iterator ().foreach ((key, val) => {
+            // It's an addition if key is null
+            if (key == null) {
+                if (val.is_user == true)
+                    return true;
+
+                individual_added (val);
+                return true;
             }
 
-            individual_aggregator.notify["is-quiescent"].connect (() => {
-                is_now_quiescent ();
-            });
-        } else {
-            is_now_quiescent ();
-        }
-    }
+            // It's a removal if value is null
+            if (val == null) {
+                individual_removed (key);
+                return true;
+            }
 
-    private void is_now_quiescent () {
-        foreach (var individual in individual_aggregator.individuals.values) {
-            individual_added (individual);
-        }
-
-        loaded ();
+            // Otherwise it's a modification
+            individual_modified (key, val);
+            return true;
+        });
     }
 
     public List<Folks.Individual> get_contacts () {

@@ -29,6 +29,8 @@ public class Dexter.Widgets.ContactImage : Gtk.Stack {
     
     public ContactImage (Gtk.IconSize icon_size, Folks.Individual? individual = null) {
         this.icon_size = icon_size;
+        valign = Gtk.Align.CENTER;
+        halign = Gtk.Align.CENTER;
         transition_type = Gtk.StackTransitionType.CROSSFADE;
 
         var force_size_image = new Gtk.Image.from_icon_name ("avatar-default", icon_size);

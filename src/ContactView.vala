@@ -23,7 +23,7 @@ public class Dexter.ContactView : Gtk.Grid {
     private Widgets.EntryGrid address_grid;
     private Widgets.EntryGrid phone_grid;
     private Widgets.EntryGrid email_grid;
-    private PersonEntry person_box;
+    private Widgets.EntryGrid person_grid;
     private Gtk.Label name_label;
     private Gtk.Label role_label;
     private Gtk.FlowBox flow_box;
@@ -40,74 +40,100 @@ public class Dexter.ContactView : Gtk.Grid {
         avatar = new Widgets.ContactImage (Gtk.IconSize.DIALOG);
 
         name_label = new Gtk.Label ("");
-        name_label.use_markup = true;
+        name_label.get_style_context ().add_class ("h2");
         name_label.xalign = 0;
 
         role_label = new Gtk.Label ("");
-        role_label.use_markup = true;
+        role_label.get_style_context ().add_class ("h3");
         role_label.xalign = 0;
 
-        name_grid.attach (avatar, 0, 0, 1, 2);
-        name_grid.attach (name_label, 1, 0, 1, 1);
-        name_grid.attach (role_label, 1, 1, 1, 1);
+        var name_role_grid = new Gtk.Grid ();
+        name_role_grid.valign = Gtk.Align.CENTER;
+        name_role_grid.orientation = Gtk.Orientation.VERTICAL;
+        name_role_grid.hexpand = true;
+        name_role_grid.add (name_label);
+        name_role_grid.add (role_label);
 
-        person_box = new PersonEntry ();
-        address_grid = new Widgets.EntryGrid (_("Address:"));
-        phone_grid = new Widgets.EntryGrid (_("Phone:"));
-        email_grid = new Widgets.EntryGrid (_("Email:"));
+        var edit_button_grid = new Gtk.Grid ();
+        edit_button_grid.valign = Gtk.Align.CENTER;
+        var edit_button = new Gtk.Button.from_icon_name ("edit-symbolic", Gtk.IconSize.BUTTON);
+        edit_button.relief = Gtk.ReliefStyle.NONE;
+        edit_button_grid.add (edit_button);
+
+        name_grid.attach (avatar, 0, 0, 1, 1);
+        name_grid.attach (name_role_grid, 1, 0, 1, 1);
+        name_grid.attach (edit_button_grid, 2, 0, 1, 1);
+
+        person_grid = new Widgets.EntryGrid (_("Dates"));
+        address_grid = new Widgets.EntryGrid (_("Address"));
+        phone_grid = new Widgets.EntryGrid (_("Phone"));
+        email_grid = new Widgets.EntryGrid (_("Email"));
 
         flow_box = new Gtk.FlowBox ();
         flow_box.column_spacing = 12;
         flow_box.row_spacing = 6;
+        flow_box.expand = true;
         flow_box.selection_mode = Gtk.SelectionMode.NONE;
         flow_box.add (phone_grid);
         flow_box.add (email_grid);
         flow_box.add (address_grid);
-        flow_box.add (person_box);
+        flow_box.add (person_grid);
+        flow_box.set_filter_func ((fbchild) => {
+            return fbchild.get_child ().visible;
+        });
+
+        var scrolled = new Gtk.ScrolledWindow (null, null);
+        scrolled.add (flow_box);
+        scrolled.vscrollbar_policy = Gtk.PolicyType.NEVER;
 
         add (name_grid);
-        add (flow_box);
+        add (scrolled);
     }
 
     public void set_contact (Folks.Individual individual) {
-        set_name_label_text (individual.full_name);
+        name_label.label = Markup.escape_text (individual.full_name);
         update_role_label (individual);
 
-        person_box.set_contact (individual);
         avatar.add_contact (individual);
         set_email_addresses (individual);
         set_phone_numbers (individual);
         set_addresses (individual);
+        set_person (individual);
+        flow_box.invalidate_filter ();
     }
 
     private void set_phone_numbers (Folks.Individual individual) {
         phone_grid.clear ();
         foreach (var phonedetail in individual.phone_numbers) {
+            var kind_label = new Gtk.Label ("");
+            kind_label.use_markup = true;
+            kind_label.xalign = 1;
+
+            var phone_label = new Gtk.Label (phonedetail.get_normalised ());
+            phone_label.xalign = 0;
+            phone_label.hexpand = true;
             var types = phonedetail.get_parameter_values (Folks.AbstractFieldDetails.PARAM_TYPE);
             if (types == null) {
-                phone_grid.add_parameter (new PhoneEntry (_("Other:"), (string)phonedetail.value));
+                kind_label.label = "<b>%s</b>".printf (_("Other:"));
+                phone_grid.add_parameters (kind_label, phone_label);
                 continue;
             }
 
-            foreach (var typ in types) {
-                switch (typ) {
-                    case (Folks.AbstractFieldDetails.PARAM_TYPE_HOME):
-                        phone_grid.add_parameter (new PhoneEntry (_("Home:"), (string)phonedetail.value));
-                        continue;
-                    case (Folks.AbstractFieldDetails.PARAM_TYPE_WORK):
-                        phone_grid.add_parameter (new PhoneEntry (_("Work:"), (string)phonedetail.value));
-                        continue;
-                    case ("cell"):
-                        phone_grid.add_parameter (new PhoneEntry (_("Mobile:"), (string)phonedetail.value));
-                        continue;
-                    case (Folks.AbstractFieldDetails.PARAM_TYPE_OTHER):
-                        phone_grid.add_parameter (new PhoneEntry (_("Other:"), (string)phonedetail.value));
-                        continue;
-                    default:
-                        phone_grid.add_parameter (new PhoneEntry (typ, (string)phonedetail.value));
-                        continue;
-                }
+            if (types.contains (Folks.AbstractFieldDetails.PARAM_TYPE_HOME)) {
+                kind_label.label = "<b>%s</b>".printf (_("Home:"));
+            } else if (types.contains (Folks.AbstractFieldDetails.PARAM_TYPE_WORK)) {
+                kind_label.label = "<b>%s</b>".printf (_("Work:"));
+            } else if (types.contains (Folks.AbstractFieldDetails.PARAM_TYPE_OTHER)) {
+                kind_label.label = "<b>%s</b>".printf (_("Other:"));
+            } else if (types.contains ("personal")) {
+                kind_label.label = "<b>%s</b>".printf (_("Personal:"));
+            } else if (types.contains ("cell")) {
+                kind_label.label = "<b>%s</b>".printf (_("Mobile:"));
+            } else {
+                kind_label.label = "<b>%s</b>".printf (types.to_array ()[0]);
             }
+
+            phone_grid.add_parameters (kind_label, phone_label);
         }
 
         if (individual.phone_numbers.size <= 0) {
@@ -120,28 +146,34 @@ public class Dexter.ContactView : Gtk.Grid {
     private void set_addresses (Folks.Individual individual) {
         address_grid.clear ();
         foreach (var postaldetail in individual.postal_addresses) {
+            var kind_label = new Gtk.Label ("");
+            kind_label.use_markup = true;
+            kind_label.xalign = 1;
+
+            var address = ((Folks.PostalAddress) postaldetail.value).to_string ();
+            var address_label = new Gtk.Label (address);
+            address_label.xalign = 0;
+            address_label.hexpand = true;
             var types = postaldetail.get_parameter_values (Folks.AbstractFieldDetails.PARAM_TYPE);
             if (types == null) {
-                address_grid.add_parameter (new AddressEntry (_("Other:"), postaldetail.value));
+                kind_label.label = "<b>%s</b>".printf (_("Other:"));
+                address_grid.add_parameters (kind_label, address_label);
                 continue;
             }
 
-            foreach (var typ in types) {
-                switch (typ) {
-                    case (Folks.AbstractFieldDetails.PARAM_TYPE_HOME):
-                        address_grid.add_parameter (new AddressEntry (_("Home:"), postaldetail.value));
-                        continue;
-                    case (Folks.AbstractFieldDetails.PARAM_TYPE_WORK):
-                        address_grid.add_parameter (new AddressEntry (_("Work:"), postaldetail.value));
-                        continue;
-                    case (Folks.AbstractFieldDetails.PARAM_TYPE_OTHER):
-                        address_grid.add_parameter (new AddressEntry (_("Other:"), postaldetail.value));
-                        continue;
-                    default:
-                        address_grid.add_parameter (new AddressEntry (typ, postaldetail.value));
-                        continue;
-                }
+            if (types.contains (Folks.AbstractFieldDetails.PARAM_TYPE_HOME)) {
+                kind_label.label = "<b>%s</b>".printf (_("Home:"));
+            } else if (types.contains (Folks.AbstractFieldDetails.PARAM_TYPE_WORK)) {
+                kind_label.label = "<b>%s</b>".printf (_("Work:"));
+            } else if (types.contains (Folks.AbstractFieldDetails.PARAM_TYPE_OTHER)) {
+                kind_label.label = "<b>%s</b>".printf (_("Other:"));
+            } else if (types.contains ("personal")) {
+                kind_label.label = "<b>%s</b>".printf (_("Personal:"));
+            } else {
+                kind_label.label = "<b>%s</b>".printf (types.to_array ()[0]);
             }
+
+            address_grid.add_parameters (kind_label, address_label);
         }
 
         if (individual.postal_addresses.size <= 0) {
@@ -153,38 +185,61 @@ public class Dexter.ContactView : Gtk.Grid {
 
     private void set_email_addresses (Folks.Individual individual) {
         email_grid.clear ();
+
         foreach (var emaildetail in individual.email_addresses) {
+            var kind_label = new Gtk.Label ("");
+            kind_label.use_markup = true;
+            kind_label.xalign = 1;
+
+            var address_label = new Gtk.Label ((string)emaildetail.value);
+            address_label.xalign = 0;
+            address_label.hexpand = true;
             var types = emaildetail.get_parameter_values (Folks.AbstractFieldDetails.PARAM_TYPE);
             if (types == null) {
-                email_grid.add_parameter (new MailAddressEntry (_("Other:"), (string)emaildetail.value));
+                kind_label.label = "<b>%s</b>".printf (_("Other:"));
+                email_grid.add_parameters (kind_label, address_label);
                 continue;
             }
 
-            foreach (var typ in types) {
-                switch (typ) {
-                    case (Folks.AbstractFieldDetails.PARAM_TYPE_HOME):
-                        email_grid.add_parameter (new MailAddressEntry (_("Home:"), (string)emaildetail.value));
-                        continue;
-                    case (Folks.AbstractFieldDetails.PARAM_TYPE_WORK):
-                        email_grid.add_parameter (new MailAddressEntry (_("Work:"), (string)emaildetail.value));
-                        continue;
-                    case (Folks.AbstractFieldDetails.PARAM_TYPE_OTHER):
-                        email_grid.add_parameter (new MailAddressEntry (_("Other:"), (string)emaildetail.value));
-                        continue;
-                    case ("personal"):
-                        email_grid.add_parameter (new MailAddressEntry (_("Personal:"), (string)emaildetail.value));
-                        continue;
-                    default:
-                        email_grid.add_parameter (new MailAddressEntry (typ, (string)emaildetail.value));
-                        continue;
-                }
+            if (types.contains (Folks.AbstractFieldDetails.PARAM_TYPE_HOME)) {
+                kind_label.label = "<b>%s</b>".printf (_("Home:"));
+            } else if (types.contains (Folks.AbstractFieldDetails.PARAM_TYPE_WORK)) {
+                kind_label.label = "<b>%s</b>".printf (_("Work:"));
+            } else if (types.contains (Folks.AbstractFieldDetails.PARAM_TYPE_OTHER)) {
+                kind_label.label = "<b>%s</b>".printf (_("Other:"));
+            } else if (types.contains ("personal")) {
+                kind_label.label = "<b>%s</b>".printf (_("Personal:"));
+            } else {
+                kind_label.label = "<b>%s</b>".printf (types.to_array ()[0]);
             }
+
+            email_grid.add_parameters (kind_label, address_label);
         }
 
         if (individual.email_addresses.size <= 0) {
             email_grid.hide ();
         } else {
             email_grid.show_all ();
+        }
+    }
+
+    private void set_person (Folks.Individual individual) {
+        person_grid.clear ();
+        if (individual.birthday != null) {
+            var birthday_label = new Gtk.Label ("<b>%s</b>".printf (_("Birthday:")));
+            birthday_label.use_markup = true;
+            birthday_label.xalign = 1;
+            if (individual.birthday.get_year () > 1900) {
+                var birthday_date_label = new Gtk.Label (individual.birthday.format (Granite.DateTime.get_default_date_format (false, true, true)));
+                person_grid.add_parameters (birthday_label, birthday_date_label);
+            } else {
+                var birthday_date_label = new Gtk.Label (individual.birthday.format (Granite.DateTime.get_default_date_format ()));
+                person_grid.add_parameters (birthday_label, birthday_date_label);
+            }
+
+            person_grid.show_all ();
+        } else {
+            person_grid.hide ();
         }
     }
 
@@ -201,10 +256,11 @@ public class Dexter.ContactView : Gtk.Grid {
         }
 
         role_label.label = role_string;
-    }
-
-    private void set_name_label_text (string name) {
-        name_label.set_markup ("<span size=\"large\"><b>%s</b></span>".printf (Markup.escape_text (name)));
+        if (role_string == "") {
+            role_label.hide ();
+        } else {
+            role_label.show ();
+        }
     }
 
     private string format_role (Folks.Role role) {
@@ -229,7 +285,7 @@ public class Dexter.ContactView : Gtk.Grid {
             }
         }
 
-        return "<big><b>%s</b></big>".printf (Markup.escape_text (role_format));
+        return Markup.escape_text (role_format.chug ());
     }
 }
 
@@ -265,51 +321,6 @@ public class Dexter.Body : Gtk.Grid {
     }
 }
 
-public class PersonEntry : Gtk.ListBox {
-    public PersonEntry () {
-        
-    }
-
-    public void set_contact (Folks.Individual individual) {
-        clear ();
-        if (individual.birthday != null) {
-            if (individual.birthday.get_year () > 1900) {
-                add (make_entry (_("Birthday:"), individual.birthday.format (Granite.DateTime.get_default_date_format (false, true, true))));
-            } else {
-                add (make_entry (_("Birthday:"), individual.birthday.format (Granite.DateTime.get_default_date_format ())));
-            }
-            show_all ();
-        } else {
-            hide ();
-        }
-    }
-
-    private Gtk.ListBoxRow make_entry (string tag, string entry) {
-        var container = new Gtk.Grid ();
-        container.row_spacing = 12;
-        container.column_spacing = 6;
-
-        var tag_label = new Gtk.Label ("<b>%s</b>".printf (tag));
-        tag_label.use_markup = true;
-
-        var entry_label = new Gtk.Label (entry);
-
-        container.attach (tag_label, 0, 0, 1, 1);
-        container.attach (entry_label, 1, 0, 1, 1);
-
-        var box = new Gtk.ListBoxRow ();
-        box.add (container);
-
-        return box;
-    }
-
-    private void clear () {
-        forall ((widget) => {
-            widget.destroy ();
-        });
-    }
-}
-
 public class AddressEntry : Gtk.ListBoxRow {
     private GtkChamplain.Embed champlain_embed;
     private Dexter.Marker point;
@@ -317,8 +328,8 @@ public class AddressEntry : Gtk.ListBoxRow {
     public AddressEntry (string kind, Folks.PostalAddress address) {
         var container = new Gtk.Grid ();
         container.expand = true;
-        container.row_spacing = 6;
-        container.column_spacing = 12;
+        container.row_spacing = 12;
+        container.column_spacing = 6;
         container.row_homogeneous = true;
 
         var kind_label = new Gtk.Label ("<b>%s</b>".printf (kind));
@@ -374,57 +385,5 @@ public class AddressEntry : Gtk.ListBoxRow {
         } catch (Error error) {
             debug (error.message);
         }
-    }
-}
-
-//TODO Subclass from generic entry
-public class PhoneEntry : Gtk.ListBoxRow {
-    public PhoneEntry (string kind, string number) {
-        var container = new Gtk.Grid ();
-        container.hexpand = true;
-        container.vexpand = true;
-        container.row_spacing = 6;
-        container.column_spacing = 12;
-        container.set_column_homogeneous (true);
-
-        var kind_label = new Gtk.Label ("<b>%s</b>".printf (kind));
-        kind_label.use_markup = true;
-        kind_label.xalign = 1;
-
-        var number_label = new Gtk.Label (number);
-        number_label.xalign = 0;
-        number_label.hexpand = true;
-
-        container.attach (kind_label, 0, 0, 2, 1);
-        container.attach (number_label, 3, 0, 4, 1);
-
-        add (container);
-    }
-}
-
-//TODO Subclass from generic Entry
-public class MailAddressEntry : Gtk.ListBoxRow {
-    public MailAddressEntry (string kind, string address) {
-        var container = new Gtk.Grid ();
-        container.hexpand = true;
-        container.vexpand = true;
-        container.row_spacing = 6;
-        container.column_spacing = 12;
-        container.set_column_homogeneous (true);
-
-        var kind_label = new Gtk.Label ("<b>%s</b>".printf (kind));
-        kind_label.use_markup = true;
-        kind_label.xalign = 1;
-
-        var address_label = new Gtk.Label (address);
-        address_label.xalign = 0;
-        address_label.hexpand = true;
-
-        container.attach (kind_label, 0, 0, 2, 1);
-        container.attach (address_label, 3, 0, 4, 1);
-
-        //TODO Set Mailaction
-
-        add (container);
     }
 }

@@ -33,6 +33,9 @@ pkg_check_modules (DEPS REQUIRED
     geocode-glib-1.0
 )
 
+# Comment this out to enable C compiler warnings
+add_definitions (-w)
+
 add_definitions (${DEPS_CFLAGS})
 link_libraries (${DEPS_LIBRARIES})
 link_directories (${DEPS_LIBRARY_DIRS})
@@ -44,4 +47,5 @@ include (ValaVersion)
 ensure_vala_version ("0.21.2" MINIMUM)
 
 add_subdirectory (src)
+add_subdirectory (po)
 add_subdirectory (data)

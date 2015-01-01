@@ -24,20 +24,21 @@ public class Dexter.Widgets.EntryGrid : Gtk.Grid {
     public EntryGrid (string title) {
         row_spacing = 6;
         column_spacing = 12;
-        var title_label = new Gtk.Label ("<big><b>%s</b></big>".printf (title));
-        title_label.use_markup = true;
-        title_label.xalign = 0;
-        title_label.hexpand = true;
+        var title_label = new Gtk.Label (title);
+        title_label.get_style_context ().add_class ("category-label");
         var separator = new Gtk.Separator (Gtk.Orientation.HORIZONTAL);
+        separator.hexpand = true;
+        separator.valign = Gtk.Align.CENTER;
         content_grid = new Gtk.Grid ();
         content_grid.row_spacing = 6;
         content_grid.column_spacing = 12;
+        content_grid.margin_start = 12;
         var expand_grid = new Gtk.Grid ();
-        expand_grid.expand = true;
-        attach (title_label, 0, 0, 2, 1);
-        attach (separator, 0, 1, 2, 1);
-        attach (content_grid, 0, 2, 2, 1);
-        attach (expand_grid, 0, 3, 2, 1);
+        expand_grid.vexpand = true;
+        attach (title_label, 0, 0, 1, 1);
+        attach (separator, 1, 0, 1, 1);
+        attach (content_grid, 0, 1, 2, 1);
+        attach (expand_grid, 0, 2, 2, 1);
     }
 
     public void add_parameters (Gtk.Widget start, Gtk.Widget end) {

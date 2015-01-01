@@ -22,6 +22,8 @@ public class Dexter.Window : Gtk.Window {
     private Gtk.Popover addressbook_popover;
     private Gtk.ToggleButton address_books_button;
     private Granite.Widgets.Welcome welcome_view;
+    private Gtk.Stack contact_stack;
+    private ContactView current_view;
     public Window () {
         var headerbar = new Gtk.HeaderBar ();
         headerbar.show_close_button = true;
@@ -49,13 +51,15 @@ public class Dexter.Window : Gtk.Window {
         });
 
         var contacts_list = new ContactsList ();
-        var contact_view = new ContactView ();
-        contacts_list.contact_selected.connect (contact_view.set_contact);
+        var current_view = new ContactView ();
+        contacts_list.contact_selected.connect (current_view.set_contact);
+        contact_stack = new Gtk.Stack ();
+        contact_stack.add (current_view);
 
         var thinpaned = new Granite.Widgets.ThinPaned (Gtk.Orientation.HORIZONTAL);
         thinpaned.set_position (150);
         thinpaned.pack1 (contacts_list, false, false);
-        thinpaned.pack2 (contact_view, true, false);
+        thinpaned.pack2 (contact_stack, true, false);
 
         welcome_view = new Granite.Widgets.Welcome (_("No Contacts Found"), _("Try to add some"));
         welcome_view.append ("contact-new", _("Create"), _("Create a new contact"));
@@ -69,15 +73,8 @@ public class Dexter.Window : Gtk.Window {
         main_stack.set_visible_child_name ("welcome_view");
 
         var contact_manager = ContactsManager.get_default ();
-        contact_manager.loaded.connect (() => {
-            if (contact_manager.get_contacts ().length () > 0) {
-                main_stack.set_visible_child_name ("main_view");
-            } else {
-                contact_manager.individual_added.connect (() => {
-                    if (contact_manager.get_contacts ().length () > 0)
-                        main_stack.set_visible_child_name ("main_view");
-                });
-            }
+        contact_manager.individual_added.connect (() => {
+            main_stack.set_visible_child_name ("main_view");
         });
 
         add (main_stack);

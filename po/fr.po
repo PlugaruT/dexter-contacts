@@ -1,0 +1,130 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2015-01-01 15:03+0100\n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language-Team: Fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n>1;\n"
+"X-Generator: Poedit 1.5.4\n"
+
+#: ../src/Dialogs/ContactDialog.vala:46
+msgid "Add Contact"
+msgstr "Ajouter un contact"
+
+#: ../src/Dialogs/ContactDialog.vala:69
+msgid "General Informations"
+msgstr "Informations générales"
+
+#: ../src/Dialogs/ContactDialog.vala:72
+msgid "Location"
+msgstr "Localisation"
+
+#: ../src/Dialogs/ContactDialog.vala:75
+msgid "Picture"
+msgstr "Image"
+
+#: ../src/Dialogs/ContactDialog.vala:78
+msgid "Linked to"
+msgstr "Lié à"
+
+#: ../src/Dialogs/ContactDialog.vala:118
+msgid "Create Contact"
+msgstr "Créer le contact"
+
+#: ../src/Dialogs/ContactDialog.vala:120
+msgid "Save Changes"
+msgstr "Enregistrer le contact"
+
+#: ../src/Dialogs/ContactDialog.vala:124
+msgid "Delete Contact"
+msgstr "Supprimer le contact"
+
+#: ../src/ContactView.vala:59
+msgid "Dates"
+msgstr "Dates"
+
+#: ../src/ContactView.vala:60
+msgid "Address"
+msgstr "Adresses"
+
+#: ../src/ContactView.vala:61
+msgid "Phone"
+msgstr "Téléphone"
+
+#: ../src/ContactView.vala:62
+msgid "Email"
+msgstr "E-mail"
+
+#: ../src/ContactView.vala:109 ../src/ContactView.vala:119
+#: ../src/ContactView.vala:151 ../src/ContactView.vala:161
+#: ../src/ContactView.vala:191 ../src/ContactView.vala:201
+msgid "Other:"
+msgstr "Autre :"
+
+#: ../src/ContactView.vala:115 ../src/ContactView.vala:157
+#: ../src/ContactView.vala:197
+msgid "Home:"
+msgstr "Domicile :"
+
+#: ../src/ContactView.vala:117 ../src/ContactView.vala:159
+#: ../src/ContactView.vala:199
+msgid "Work:"
+msgstr "Travail :"
+
+#: ../src/ContactView.vala:121 ../src/ContactView.vala:163
+#: ../src/ContactView.vala:203
+msgid "Personal:"
+msgstr "Personnel :"
+
+#: ../src/ContactView.vala:123
+msgid "Mobile:"
+msgstr "Mobile :"
+
+#: ../src/ContactView.vala:221
+msgid "Birthday:"
+msgstr "Anniversaire :"
+
+#: ../src/ContactView.vala:268
+msgid " %s at %s"
+msgstr " %s à %s"
+
+#: ../src/ContactView.vala:276
+msgid " %s as %s"
+msgstr " %s en tant que %s"
+
+#: ../src/Window.vala:29
+msgid "Contacts"
+msgstr "Contacts"
+
+#: ../src/Window.vala:41
+msgid "Search contact"
+msgstr "Rechercher"
+
+#: ../src/Window.vala:60
+msgid "No Contacts Found"
+msgstr "Aucun contact trouvé"
+
+#: ../src/Window.vala:60
+msgid "Try to add some"
+msgstr "Essayez d'en ajouter"
+
+#: ../src/Window.vala:61
+msgid "Create"
+msgstr "Créer"
+
+#: ../src/Window.vala:61
+msgid "Create a new contact"
+msgstr "Créer un nouveau contact"
+
+#: ../src/Window.vala:62
+msgid "Import"
+msgstr "Importer"
+
+#: ../src/Window.vala:62
+msgid "Add a vCard"
+msgstr "Ajouter une vCard"
