@@ -24,8 +24,9 @@
  */
 public class Dexter.Widgets.ContactImage : Gtk.Stack {
     private Gtk.IconSize icon_size;
-    private Gtk.Image current_image = null;
+    private Gtk.Widget current_image = null;
     private bool default_avatar = true;
+    private int PADDING = 3;
     
     public ContactImage (Gtk.IconSize icon_size, Folks.Individual? individual = null) {
         this.icon_size = icon_size;
@@ -61,12 +62,15 @@ public class Dexter.Widgets.ContactImage : Gtk.Stack {
     }
 
     private void show_avatar_from_loadable_icon (LoadableIcon icon) {
-        var image = new Gtk.Image ();
-        image.draw.connect ((cr) => {
+        var box = new Gtk.EventBox ();
+        box.get_style_context ().add_class ("avatar");
+        box.show_all ();
+        box.draw.connect ((cr) => {
             try {
-                var width = get_allocated_width ();
-                var height = get_allocated_height ();
-                int size = (int) double.min (width, height);
+                var width = box.get_allocated_width ();
+                var height = box.get_allocated_height ();
+                int size = (int) double.min (width, height) - 2* PADDING;
+                var style_context = box.get_style_context ();
                 var stream = icon.load (size, null);
                 var img_pixbuf = new Gdk.Pixbuf.from_stream_at_scale (stream, size, size, true);
                 cr.set_operator (Cairo.Operator.OVER);
@@ -75,9 +79,8 @@ public class Dexter.Widgets.ContactImage : Gtk.Stack {
                 Granite.Drawing.Utilities.cairo_rounded_rectangle (cr, x, y, size, size, size/2);
                 Gdk.cairo_set_source_pixbuf (cr, img_pixbuf, x, y);
                 cr.fill_preserve ();
-                cr.set_line_width (0);
-                cr.set_source_rgba (0, 0, 0, 0.3);
-                cr.stroke ();
+                style_context.render_background (cr, x, y, size, size);
+                style_context.render_frame (cr, x, y, size, size);
             } catch (Error e) {
                 critical (e.message);
                 return false;
@@ -85,39 +88,15 @@ public class Dexter.Widgets.ContactImage : Gtk.Stack {
 
             return true;
         });
-        show_avatar_image (image);
+        show_avatar_image (box);
     }
 
     private void show_default_avatar () {
-        var image = new Gtk.Image ();
-        image.draw.connect ((cr) => {
-            try {
-                var width = get_allocated_width ();
-                var height = get_allocated_height ();
-                int size = (int) double.min (width, height);
-                var img_pixbuf = Gtk.IconTheme.get_default ().load_icon ("avatar-default", size, Gtk.IconLookupFlags.GENERIC_FALLBACK);
-                cr.set_operator (Cairo.Operator.OVER);
-                var x = (width-size)/2;
-                var y = (height-size)/2;
-                Granite.Drawing.Utilities.cairo_rounded_rectangle (cr, x, y, size, size, size/2);
-                Gdk.cairo_set_source_pixbuf (cr, img_pixbuf, x, y);
-                cr.fill_preserve ();
-                cr.set_line_width (0);
-                cr.set_source_rgba (0, 0, 0, 0.3);
-                cr.stroke ();
-            } catch (Error e) {
-                critical (e.message);
-                return false;
-            }
-
-            return true;
-        });
-
-        show_avatar_image (image);
+        show_avatar_image (new Gtk.Image.from_icon_name ("avatar-default", icon_size));
         default_avatar = true;
     }
 
-    private void show_avatar_image (Gtk.Image image) {
+    private void show_avatar_image (Gtk.Widget image) {
         add (image);
         image.show ();
         set_visible_child (image);

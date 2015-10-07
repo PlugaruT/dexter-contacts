@@ -56,10 +56,10 @@ public class Dexter.Window : Gtk.Window {
         contact_stack = new Gtk.Stack ();
         contact_stack.add (current_view);
 
-        var thinpaned = new Granite.Widgets.ThinPaned (Gtk.Orientation.HORIZONTAL);
-        thinpaned.set_position (150);
-        thinpaned.pack1 (contacts_list, false, false);
-        thinpaned.pack2 (contact_stack, true, false);
+        var paned = new Gtk.Paned (Gtk.Orientation.HORIZONTAL);
+        paned.set_position (150);
+        paned.pack1 (contacts_list, false, false);
+        paned.pack2 (contact_stack, true, false);
 
         welcome_view = new Granite.Widgets.Welcome (_("No Contacts Found"), _("Try to add some"));
         welcome_view.append ("contact-new", _("Create"), _("Create a new contact"));
@@ -68,7 +68,7 @@ public class Dexter.Window : Gtk.Window {
 
         var main_stack = new Gtk.Stack ();
         main_stack.transition_type = Gtk.StackTransitionType.CROSSFADE;
-        main_stack.add_named (thinpaned, "main_view");
+        main_stack.add_named (paned, "main_view");
         main_stack.add_named (welcome_view, "welcome_view");
         main_stack.set_visible_child_name ("welcome_view");
 

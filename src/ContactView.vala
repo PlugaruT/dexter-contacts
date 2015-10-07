@@ -41,11 +41,11 @@ public class Dexter.ContactView : Gtk.Grid {
 
         name_label = new Gtk.Label ("");
         name_label.get_style_context ().add_class ("h2");
-        name_label.xalign = 0;
+        ((Gtk.Misc) name_label).xalign = 0;
 
         role_label = new Gtk.Label ("");
         role_label.get_style_context ().add_class ("h3");
-        role_label.xalign = 0;
+        ((Gtk.Misc) role_label).xalign = 0;
 
         var name_role_grid = new Gtk.Grid ();
         name_role_grid.valign = Gtk.Align.CENTER;
@@ -107,10 +107,10 @@ public class Dexter.ContactView : Gtk.Grid {
         foreach (var phonedetail in individual.phone_numbers) {
             var kind_label = new Gtk.Label ("");
             kind_label.use_markup = true;
-            kind_label.xalign = 1;
+            ((Gtk.Misc) kind_label).xalign = 1;
 
             var phone_label = new Gtk.Label (phonedetail.get_normalised ());
-            phone_label.xalign = 0;
+            ((Gtk.Misc) phone_label).xalign = 0;
             phone_label.hexpand = true;
             var types = phonedetail.get_parameter_values (Folks.AbstractFieldDetails.PARAM_TYPE);
             if (types == null) {
@@ -148,11 +148,11 @@ public class Dexter.ContactView : Gtk.Grid {
         foreach (var postaldetail in individual.postal_addresses) {
             var kind_label = new Gtk.Label ("");
             kind_label.use_markup = true;
-            kind_label.xalign = 1;
+            ((Gtk.Misc) kind_label).xalign = 1;
 
             var address = ((Folks.PostalAddress) postaldetail.value).to_string ();
             var address_label = new Gtk.Label (address);
-            address_label.xalign = 0;
+            ((Gtk.Misc) address_label).xalign = 0;
             address_label.hexpand = true;
             var types = postaldetail.get_parameter_values (Folks.AbstractFieldDetails.PARAM_TYPE);
             if (types == null) {
@@ -189,10 +189,10 @@ public class Dexter.ContactView : Gtk.Grid {
         foreach (var emaildetail in individual.email_addresses) {
             var kind_label = new Gtk.Label ("");
             kind_label.use_markup = true;
-            kind_label.xalign = 1;
+            ((Gtk.Misc) kind_label).xalign = 1;
 
             var address_label = new Gtk.Label ((string)emaildetail.value);
-            address_label.xalign = 0;
+            ((Gtk.Misc) address_label).xalign = 0;
             address_label.hexpand = true;
             var types = emaildetail.get_parameter_values (Folks.AbstractFieldDetails.PARAM_TYPE);
             if (types == null) {
@@ -228,7 +228,7 @@ public class Dexter.ContactView : Gtk.Grid {
         if (individual.birthday != null) {
             var birthday_label = new Gtk.Label ("<b>%s</b>".printf (_("Birthday:")));
             birthday_label.use_markup = true;
-            birthday_label.xalign = 1;
+            ((Gtk.Misc) birthday_label).xalign = 1;
             if (individual.birthday.get_year () > 1900) {
                 var birthday_date_label = new Gtk.Label (individual.birthday.format (Granite.DateTime.get_default_date_format (false, true, true)));
                 person_grid.add_parameters (birthday_label, birthday_date_label);
@@ -301,7 +301,7 @@ public class Dexter.Body : Gtk.Grid {
         header_label = new Gtk.Label ("<big><b>%s</b></big>".printf (header));
         header_label.hexpand = true;
         header_label.use_markup = true;
-        header_label.xalign = 0;
+        ((Gtk.Misc) header_label).xalign = 0;
 
         list = new Gtk.ListBox ();
         list.set_selection_mode (Gtk.SelectionMode.NONE);
@@ -321,9 +321,8 @@ public class Dexter.Body : Gtk.Grid {
     }
 }
 
-public class AddressEntry : Gtk.ListBoxRow {
-    private GtkChamplain.Embed champlain_embed;
-    private Dexter.Marker point;
+public class Dexter.AddressEntry : Gtk.ListBoxRow {
+    private Widgets.MapView map_view;
 
     public AddressEntry (string kind, Folks.PostalAddress address) {
         var container = new Gtk.Grid ();
@@ -334,22 +333,13 @@ public class AddressEntry : Gtk.ListBoxRow {
 
         var kind_label = new Gtk.Label ("<b>%s</b>".printf (kind));
         kind_label.use_markup = true;
-        kind_label.xalign = 1;
+        ((Gtk.Misc) kind_label).xalign = 1;
 
         var locality_label = new Gtk.Label (address.locality);
-        locality_label.xalign = 0;
+        ((Gtk.Misc) locality_label).xalign = 0;
         locality_label.hexpand = true;
 
-        champlain_embed = new GtkChamplain.Embed ();
-        var view = champlain_embed.champlain_view;
-        var marker_layer = new Champlain.MarkerLayer.full (Champlain.SelectionMode.SINGLE); 
-        view.add_layer (marker_layer);
-
-        point = new Dexter.Marker ();
-
-        view.zoom_level = 14;
-        view.center_on (point.latitude, point.longitude);
-        marker_layer.add_marker (point);
+        map_view = new Widgets.MapView ();
 
         int current_line = 0;
 
@@ -363,7 +353,7 @@ public class AddressEntry : Gtk.ListBoxRow {
             container.attach (region_label, 3, current_line++, 4, 1);
         }
 
-        container.attach (champlain_embed, 0, current_line, 7, 6);
+        container.attach (map_view, 0, current_line, 7, 6);
         add (container);
 
         compute_location.begin (address.to_string ());
@@ -375,10 +365,8 @@ public class AddressEntry : Gtk.ListBoxRow {
             forward.set_answer_count (1);
             var places = forward.search ();
             foreach (var place in places) {
-                point.latitude = place.location.latitude;
-                point.longitude = place.location.longitude;
                 Idle.add (() => {
-                    champlain_embed.champlain_view.go_to (point.latitude, point.longitude);
+                    map_view.set_point (place.location.latitude, place.location.longitude);
                     return false;
                 });
             }

@@ -24,8 +24,9 @@ public class Dexter.Widgets.EntryGrid : Gtk.Grid {
     public EntryGrid (string title) {
         row_spacing = 6;
         column_spacing = 12;
+        expand = true;
         var title_label = new Gtk.Label (title);
-        title_label.get_style_context ().add_class ("category-label");
+        title_label.get_style_context ().add_class ("h4");
         var separator = new Gtk.Separator (Gtk.Orientation.HORIZONTAL);
         separator.hexpand = true;
         separator.valign = Gtk.Align.CENTER;

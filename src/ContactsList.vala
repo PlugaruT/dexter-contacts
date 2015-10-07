@@ -159,7 +159,7 @@ public class Dexter.ContactItem : Gtk.ListBoxRow {
         }
 
         name_label = new Gtk.Label (name);
-        name_label.xalign = 0;
+        ((Gtk.Misc) name_label).xalign = 0;
         name_label.use_markup = true;
         name_label.ellipsize = Pango.EllipsizeMode.END;
         name_label.margin = 6;

@@ -9,8 +9,10 @@ vala_precompile (VALA_C ${CMAKE_PROJECT_NAME}
     ContactsManager.vala
     ContactView.vala
     Dialogs/ContactDialog.vala
+    Dialogs/InfoPanel.vala
     Widgets/ContactImage.vala
     Widgets/EntryGrid.vala
+    Widgets/MapView.vala
 PACKAGES
     gobject-2.0
     glib-2.0
